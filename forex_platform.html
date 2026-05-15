@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Van Duijn Markets</title>
+<style>
+  :root {
+    --bg: #eeece7;
+    --bg2: #e8e5df;
+    --bg3: #e0ddd6;
+    --bg-dark: #1c1e1a;
+    --bg-dark2: #252720;
+    --border: #d0ccc2;
+    --border2: #bab5a8;
+    --accent: #4a5240;
+    --gold: #8b7355;
+    --gold2: #a08560;
+    --green: #2d5a3d;
+    --red: #7a3030;
+    --text: #1c1e1a;
+    --text2: #3a3c38;
+    --muted: #6b6d66;
+    --subtle: #9a9b94;
+    --font: 'Georgia', 'Times New Roman', serif;
+    --sans: 'Segoe UI', system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--sans); background: var(--bg); color: var(--text); min-height: 100vh; font-size: 14px; line-height: 1.6; }
+  a { color: var(--gold); text-decoration: none; }
+
+  /* NAV */
+  nav { display: flex; align-items: center; justify-content: space-between; padding: 0 64px; height: 68px; border-bottom: 1px solid var(--border); background: var(--bg); position: sticky; top: 0; z-index: 100; }
+  .logo { font-family: var(--font); font-size: 2rem; font-weight: 400; letter-spacing: 1px; color: var(--text); }
+  .logo span { color: var(--gold); }
+  .nav-links { display: flex; align-items: center; gap: 36px; }
+  .nav-links a { font-size: 0.7rem; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); cursor: pointer; transition: color .2s; }
+  .nav-links a:hover { color: var(--text); }
+  .nav-right { display: flex; align-items: center; gap: 12px; }
+  .btn { padding: 8px 22px; border: none; cursor: pointer; font-size: 0.68rem; font-weight: 500; letter-spacing: 2px; text-transform: uppercase; transition: all .2s; font-family: var(--sans); }
+  .btn-ghost { background: transparent; border: 1px solid var(--border2); color: var(--muted); }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-dark { background: var(--bg-dark); color: #d8d4cb; }
+  .btn-dark:hover { background: var(--bg-dark2); }
+  .btn-full { width: 100%; padding: 13px; text-align: center; }
+  .btn-outline-light { background: transparent; border: 1px solid #3a3c35; color: #7a7d72; }
+  .btn-outline-light:hover { border-color: var(--gold2); color: var(--gold2); }
+
+  /* TICKER */
+  .ticker-bar { background: var(--bg-dark); border-bottom: 1px solid #2a2c25; overflow: hidden; white-space: nowrap; padding: 8px 0; cursor: grab; user-select: none; }
+  #ticker { display: inline-block; padding-left: 100%; will-change: transform; }
+  .tick-item { display: inline-block; margin: 0 48px; font-size: 0.72rem; letter-spacing: 1px; }
+  .tick-pair { color: #a0a39a; font-weight: 700; margin-right: 10px; text-transform: uppercase; letter-spacing: 2px; }
+  .tick-price { color: #c8c4bc; font-weight: 600; margin-right: 8px; }
+  .tick-up { color: #5a8c6a; font-size: 0.68rem; }
+  .tick-down { color: #9a5050; font-size: 0.68rem; }
+
+  /* PAGES */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* HERO */
+  .hero { display: grid; grid-template-columns: 1fr 420px; min-height: 520px; border-bottom: 1px solid var(--border); }
+  .hero-left { padding: 88px 64px; display: flex; flex-direction: column; justify-content: center; position: relative; overflow: hidden; }
+  .hero-left::after { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(238,236,231,.95) 0%, rgba(238,236,231,.80) 55%, rgba(238,236,231,.4) 100%); z-index: 1; }
+  .hero-skyline { position: absolute; bottom: 0; left: 0; right: 0; z-index: 0; opacity: 0.18; }
+  .hero-left > * { position: relative; z-index: 2; }
+  .hero-eyebrow { font-size: 0.62rem; letter-spacing: 3px; text-transform: uppercase; color: var(--gold); margin-bottom: 24px; display: flex; align-items: center; gap: 12px; }
+  .hero-eyebrow::before { content: ''; display: block; width: 28px; height: 1px; background: var(--gold); }
+  .hero h1 { font-family: var(--font); font-size: 3rem; font-weight: 400; line-height: 1.2; color: var(--text); margin-bottom: 24px; }
+  .hero h1 em { font-style: italic; color: var(--gold); }
+  .hero p { color: var(--muted); font-size: 0.92rem; max-width: 440px; line-height: 1.85; margin-bottom: 40px; }
+  .hero-actions { display: flex; gap: 12px; }
+  .hero-actions .btn { padding: 12px 28px; }
+  .hero-right { background: var(--bg-dark); border-left: 1px solid #2a2c25; padding: 48px 40px; display: flex; flex-direction: column; justify-content: space-between; }
+  .hero-right-label { font-size: 0.58rem; letter-spacing: 3px; text-transform: uppercase; color: #5a5c55; margin-bottom: 20px; }
+  .market-snapshot { display: flex; flex-direction: column; gap: 1px; background: #2a2c25; }
+  .snapshot-row { background: var(--bg-dark); padding: 13px 16px; display: flex; align-items: center; justify-content: space-between; }
+  .snap-pair { font-size: 0.82rem; font-weight: 700; color: #c8c4bc; letter-spacing: 2px; text-transform: uppercase; }
+  .snap-bias { font-size: 0.58rem; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; padding: 3px 10px; }
+  .snap-bias.bull { background: rgba(90,140,106,.12); color: #5a8c6a; border: 1px solid rgba(90,140,106,.2); }
+  .snap-bias.bear { background: rgba(154,80,80,.12); color: #9a5050; border: 1px solid rgba(154,80,80,.2); }
+  .snap-bias.neut { background: rgba(122,125,114,.1); color: #7a7d72; border: 1px solid #3a3c35; }
+  .hero-disclaimer { font-size: 0.68rem; color: #4a4c45; line-height: 1.7; border-top: 1px solid #2a2c25; padding-top: 18px; }
+
+  /* STATS */
+  .stats-bar { display: grid; grid-template-columns: repeat(5,1fr); border-bottom: 1px solid var(--border); background: var(--bg2); }
+  .stat-item { padding: 22px 32px; border-right: 1px solid var(--border); }
+  .stat-item:last-child { border-right: none; }
+  .stat-num { font-family: var(--font); font-size: 1.5rem; color: var(--text); }
+  .stat-lbl { font-size: 0.6rem; letter-spacing: 2px; text-transform: uppercase; color: var(--subtle); margin-top: 4px; }
+
+  /* SECTION */
+  .section { max-width: 1200px; margin: 0 auto; padding: 72px 64px; }
+  .section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 40px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+  .section-head-left { display: flex; align-items: center; gap: 14px; }
+  .section-line { width: 20px; height: 1px; background: var(--gold); flex-shrink: 0; }
+  .section-head h2 { font-size: 0.62rem; letter-spacing: 3px; text-transform: uppercase; color: var(--gold); }
+  .section-head span { font-size: 0.68rem; color: var(--subtle); }
+
+  /* CARDS */
+  .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px,1fr)); gap: 1px; background: var(--border); border: 1px solid var(--border); }
+  .card { background: var(--bg); padding: 28px; position: relative; transition: background .2s; }
+  .card:hover { background: var(--bg2); }
+  .card-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; }
+  .card-pair { font-family: var(--sans); font-size: 1.1rem; font-weight: 700; color: var(--text); letter-spacing: 2px; text-transform: uppercase; }
+  .card-meta { font-size: 0.62rem; letter-spacing: 1.5px; text-transform: uppercase; color: var(--subtle); margin-top: 4px; }
+  .bias-tag { font-size: 0.6rem; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; padding: 4px 10px; }
+  .bias-tag.bull { background: rgba(45,90,61,.08); color: var(--green); border: 1px solid rgba(45,90,61,.2); }
+  .bias-tag.bear { background: rgba(122,48,48,.08); color: var(--red); border: 1px solid rgba(122,48,48,.2); }
+  .bias-tag.neut { background: rgba(154,155,148,.1); color: var(--subtle); border: 1px solid var(--border2); }
+  .levels-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1px; background: var(--border); border: 1px solid var(--border); margin-bottom: 16px; }
+  .level { background: var(--bg2); padding: 12px 14px; }
+  .level-lbl { font-size: 0.58rem; letter-spacing: 2px; text-transform: uppercase; color: var(--subtle); margin-bottom: 6px; }
+  .level-val { font-size: 0.9rem; font-weight: 600; }
+  .level-val.entry { color: var(--gold); }
+  .level-val.sl { color: var(--red); }
+  .level-val.tp { color: var(--green); }
+  .card-charts { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); border: 1px solid var(--border); margin-bottom: 16px; }
+  .chart-box { background: var(--bg2); overflow: hidden; }
+  .chart-label { font-size: 0.55rem; letter-spacing: 2px; text-transform: uppercase; color: var(--subtle); padding: 7px 10px; border-bottom: 1px solid var(--border); }
+  .chart-box img { width: 100%; height: 160px; object-fit: cover; display: block; }
+  .chart-empty { height: 160px; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; color: var(--border2); }
+  .card-notes { font-size: 0.83rem; color: var(--muted); line-height: 1.75; }
+  .card-footer { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border); }
+  .card-date { font-size: 0.62rem; letter-spacing: 1.5px; text-transform: uppercase; color: var(--subtle); }
+  .blur-overlay { position: absolute; inset: 0; backdrop-filter: blur(10px); background: rgba(238,236,231,.8); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; }
+  .blur-overlay p { font-size: 0.65rem; letter-spacing: 2.5px; text-transform: uppercase; color: var(--muted); }
+
+  /* FOUNDER */
+  .about-wrap { background: var(--bg2); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+  .about-grid { display: grid; grid-template-columns: 280px 1fr; background: var(--border); border: 1px solid var(--border); }
+  .about-photo { display: flex; flex-direction: column; }
+  .about-photo img { width: 100%; flex: 1; object-fit: cover; object-position: top; display: block; filter: grayscale(20%); min-height: 400px; }
+  .about-photo-caption { background: var(--bg-dark); padding: 16px 20px; border-top: 1px solid #2a2c25; }
+  .cap-role { font-size: 0.58rem; letter-spacing: 2.5px; text-transform: uppercase; color: var(--gold2); margin-bottom: 4px; }
+  .cap-name { font-family: var(--font); font-size: 0.95rem; color: #c8c4bc; }
+  .about-content { background: var(--bg); padding: 52px 56px; }
+  .about-content p { color: var(--muted); font-size: 0.88rem; line-height: 1.9; margin-bottom: 18px; }
+  .about-content p strong { color: var(--text2); font-weight: 600; }
+  .about-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); border: 1px solid var(--border); margin: 28px 0; }
+  .about-stat { background: var(--bg2); padding: 18px 22px; }
+  .about-stat-num { font-family: var(--font); font-size: 1.4rem; color: var(--text); }
+  .about-stat-lbl { font-size: 0.6rem; letter-spacing: 2px; text-transform: uppercase; color: var(--subtle); margin-top: 4px; }
+  .disclaimer-box { border-left: 2px solid var(--gold); padding: 14px 18px; background: var(--bg2); margin-top: 28px; }
+  .disclaimer-box p { font-size: 0.78rem; color: var(--subtle); line-height: 1.7; margin: 0; font-style: italic; }
+
+  /* PRICING */
+  .pricing-wrap { background: var(--bg-dark); border-top: 1px solid #2a2c25; }
+  .pricing-section { max-width: 1200px; margin: 0 auto; padding: 72px 64px; }
+  .pricing-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 40px; padding-bottom: 16px; border-bottom: 1px solid #2a2c25; }
+  .pricing-head-left { display: flex; align-items: center; gap: 14px; }
+  .pricing-head h2 { font-size: 0.62rem; letter-spacing: 3px; text-transform: uppercase; color: var(--gold2); }
+  .pricing-head span { font-size: 0.68rem; color: #5a5c55; }
+  .pricing-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: #2a2c25; border: 1px solid #2a2c25; max-width: 640px; margin: 0 auto; }
+  .plan { background: var(--bg-dark); padding: 44px 40px; }
+  .plan.featured { background: var(--bg-dark2); }
+  .plan-tier { font-size: 0.6rem; letter-spacing: 3px; text-transform: uppercase; color: #5a5c55; margin-bottom: 20px; }
+  .plan-price { font-family: var(--font); font-size: 2.8rem; color: #d8d4cb; line-height: 1; margin-bottom: 4px; }
+  .plan-price sup { font-size: 1rem; color: #7a7d72; vertical-align: top; margin-top: 10px; }
+  .plan-price sub { font-size: 0.8rem; color: #7a7d72; }
+  .plan-badge { display: inline-block; background: var(--gold); color: #1c1e1a; font-size: 0.55rem; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; padding: 2px 8px; margin-left: 10px; vertical-align: middle; }
+  .plan-divider { border: none; border-top: 1px solid #2a2c25; margin: 22px 0; }
+  .plan-features { list-style: none; margin-bottom: 36px; }
+  .plan-features li { padding: 9px 0; font-size: 0.81rem; color: #7a7d72; border-bottom: 1px solid #2a2c25; display: flex; align-items: center; gap: 12px; }
+  .plan-features li::before { content: '—'; color: var(--gold); font-size: 0.7rem; }
+  .plan .btn { width: 100%; padding: 13px; text-align: center; }
+
+  /* GATE */
+  .gate { min-height: calc(100vh - 69px); display: flex; align-items: center; justify-content: center; background: var(--bg); }
+  .gate-box { border: 1px solid var(--border); background: var(--bg2); padding: 56px 52px; width: 420px; }
+  .gate-eyebrow { font-size: 0.58rem; letter-spacing: 3px; text-transform: uppercase; color: var(--gold); margin-bottom: 24px; display: flex; align-items: center; gap: 12px; }
+  .gate-eyebrow::before { content: ''; display: block; width: 16px; height: 1px; background: var(--gold); }
+  .gate-box h2 { font-family: var(--font); font-size: 1.6rem; color: var(--text); margin-bottom: 10px; }
+  .gate-box p { font-size: 0.82rem; color: var(--muted); margin-bottom: 32px; line-height: 1.75; }
+  .form-group { margin-bottom: 20px; }
+  .form-label { display: block; font-size: 0.58rem; letter-spacing: 2px; text-transform: uppercase; color: var(--subtle); margin-bottom: 8px; }
+  .form-input { width: 100%; background: var(--bg); border: 1px solid var(--border2); color: var(--text); padding: 11px 16px; font-size: 0.88rem; outline: none; border-radius: 0; transition: border-color .2s; font-family: var(--sans); }
+  .form-input:focus { border-color: var(--gold); }
+  select.form-input option { background: var(--bg2); color: var(--text); }
+  textarea.form-input { resize: vertical; min-height: 90px; line-height: 1.6; }
+  .gate-err { font-size: 0.72rem; color: var(--red); margin-top: 10px; }
+  .gate-foot { margin-top: 24px; padding-top: 18px; border-top: 1px solid var(--border); font-size: 0.75rem; color: var(--subtle); }
+
+  /* MEMBER */
+  .member-welcome { background: var(--bg-dark); border-bottom: 1px solid #2a2c25; padding: 24px 64px; display: flex; align-items: center; justify-content: space-between; }
+  .member-welcome-title { font-family: var(--font); font-size: 1.4rem; color: #c8c4bc; }
+  .member-welcome-sub { font-size: 0.6rem; letter-spacing: 3px; text-transform: uppercase; color: #5a5c55; margin-bottom: 6px; }
+  .filter-strip { padding: 0 64px; border-bottom: 1px solid var(--border); display: flex; overflow-x: auto; background: var(--bg2); }
+  .filter-btn { padding: 16px 20px; font-size: 0.62rem; letter-spacing: 2px; text-transform: uppercase; color: var(--subtle); background: transparent; border: none; border-bottom: 1px solid transparent; cursor: pointer; white-space: nowrap; transition: all .15s; font-family: var(--sans); margin-bottom: -1px; }
+  .filter-btn.active, .filter-btn:hover { color: var(--gold); border-bottom-color: var(--gold); }
+  .archive-pair-header { background: var(--bg2); border: 1px solid var(--border); padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; margin-bottom: 1px; transition: background .15s; }
+  .archive-pair-header:hover { background: var(--bg3); }
+
+  /* ADMIN */
+  .admin-wrap { max-width: 700px; margin: 0 auto; padding: 64px; }
+  .admin-title-block { display: flex; align-items: center; justify-content: space-between; margin-bottom: 40px; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
+  .admin-title-block h2 { font-size: 0.62rem; letter-spacing: 3px; text-transform: uppercase; color: var(--gold); }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+  .admin-list-title { font-size: 0.58rem; letter-spacing: 2.5px; text-transform: uppercase; color: var(--subtle); padding-bottom: 14px; border-bottom: 1px solid var(--border); margin-bottom: 2px; }
+  .admin-item { background: var(--bg); border-bottom: 1px solid var(--border); padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; transition: background .15s; }
+  .admin-item:hover { background: var(--bg2); }
+  .admin-item-info strong { display: block; font-size: 0.85rem; color: var(--text); margin-bottom: 4px; }
+  .admin-item-info span { font-size: 0.7rem; color: var(--muted); }
+  .btn-del { background: transparent; border: 1px solid rgba(122,48,48,.3); color: var(--red); padding: 5px 16px; cursor: pointer; font-size: 0.62rem; letter-spacing: 1.5px; text-transform: uppercase; font-family: var(--sans); transition: all .15s; }
+  .btn-del:hover { background: rgba(122,48,48,.08); }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">Van Duijn <span>Markets</span></div>
+  <div class="nav-links">
+    <a onclick="document.getElementById('page-landing').scrollIntoView();window.scrollTo(0,0)">Overview</a>
+    <a onclick="goTo('about-section')">Founder</a>
+    <a onclick="goTo('trackrecord-section')">Track Record</a>
+    <a onclick="goTo('pricing-section')">Access</a>
+    <a onclick="showPage('gate')">Member Login</a>
+  </div>
+  <div class="nav-right">
+    <button class="btn btn-ghost" onclick="showPage('admin-login')">Admin</button>
+    <button class="btn btn-dark" onclick="goTo('pricing-section')">Request Access</button>
+  </div>
+</nav>
+
+<!-- TICKER -->
+<div class="ticker-bar"><div id="ticker"></div></div>
+
+<!-- LANDING -->
+<div id="page-landing" class="page active">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-left">
+      <svg class="hero-skyline" viewBox="0 0 800 300" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMax slice">
+        <rect x="0" y="260" width="800" height="40" fill="#4a5240" opacity="0.3"/>
+        <polygon points="480,20 468,260 492,260" fill="#2a2c25"/>
+        <polygon points="480,20 474,140 486,140" fill="#3a3c35" opacity="0.5"/>
+        <rect x="370" y="120" width="55" height="140" rx="2" fill="#2a2c25"/>
+        <rect x="365" y="105" width="65" height="20" rx="1" fill="#1c1e1a"/>
+        <rect x="375" y="125" width="8" height="12" fill="#3a3c35" opacity="0.6"/>
+        <rect x="388" y="125" width="8" height="12" fill="#3a3c35" opacity="0.6"/>
+        <rect x="401" y="125" width="8" height="12" fill="#3a3c35" opacity="0.6"/>
+        <ellipse cx="310" cy="90" rx="18" ry="6" fill="#2a2c25"/>
+        <rect x="293" y="90" width="36" height="160" rx="15" fill="#2a2c25"/>
+        <rect x="455" y="100" width="32" height="160" fill="#252720"/>
+        <polygon points="471,70 463,100 479,100" fill="#1c1e1a"/>
+        <rect x="240" y="130" width="28" height="130" fill="#2a2c25"/>
+        <polygon points="254,105 248,128 260,128" fill="#1c1e1a"/>
+        <rect x="340" y="150" width="24" height="110" fill="#252720"/>
+        <rect x="570" y="90" width="50" height="170" fill="#252720"/>
+        <polygon points="595,60 583,93 607,93" fill="#1c1e1a"/>
+        <rect x="530" y="110" width="34" height="150" fill="#2a2c25"/>
+        <polygon points="547,90 539,113 555,113" fill="#1c1e1a"/>
+        <rect x="610" y="130" width="38" height="130" fill="#252720"/>
+        <rect x="0" y="195" width="60" height="65" fill="#3a3c35" opacity="0.5"/>
+        <rect x="90" y="185" width="50" height="75" fill="#3a3c35" opacity="0.4"/>
+        <rect x="165" y="175" width="45" height="85" fill="#3a3c35" opacity="0.4"/>
+        <rect x="650" y="160" width="45" height="100" fill="#2a2c25" opacity="0.5"/>
+        <rect x="723" y="170" width="50" height="90" fill="#2a2c25" opacity="0.4"/>
+        <rect x="185" y="210" width="10" height="50" fill="#4a5240" opacity="0.6"/>
+        <rect x="215" y="210" width="10" height="50" fill="#4a5240" opacity="0.6"/>
+        <rect x="185" y="225" width="40" height="4" fill="#3a3c35" opacity="0.5"/>
+        <line x1="186" y1="209" x2="215" y2="226" stroke="#3a3c35" stroke-width="1.5" opacity="0.5"/>
+        <line x1="225" y1="209" x2="195" y2="226" stroke="#3a3c35" stroke-width="1.5" opacity="0.5"/>
+        <rect x="100" y="200" width="40" height="60" fill="#2a2c25" opacity="0.6"/>
+        <ellipse cx="120" cy="200" rx="22" ry="12" fill="#252720" opacity="0.7"/>
+      </svg>
+      <div class="hero-eyebrow">Independent Forex Analysis</div>
+      <h1>Market Bias &<br><em>Structured Insights</em></h1>
+      <p>A professional and transparent view of the forex market, grounded in liquidity theory and price inefficiencies. Analysis shared with discipline and rigour.</p>
+      <div class="hero-actions">
+        <button class="btn btn-dark" onclick="goTo('pricing-section')">Request Access</button>
+        <button class="btn btn-ghost" onclick="showPage('gate')">Member Login</button>
+      </div>
+    </div>
+    <div class="hero-right">
+      <div>
+        <div class="hero-right-label">Current Bias — Key Pairs</div>
+        <div class="market-snapshot" id="hero-snapshot"></div>
+      </div>
+      <div class="hero-disclaimer">The analysis on this platform reflects personal market bias and is strictly informational. Nothing herein constitutes financial advice or a recommendation to trade.</div>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-bar">
+    <div class="stat-item"><div class="stat-num">4</div><div class="stat-lbl">Pairs Covered</div></div>
+    <div class="stat-item"><div class="stat-num">Daily</div><div class="stat-lbl">Analysis</div></div>
+    <div class="stat-item"><div class="stat-num">HTF & LTF</div><div class="stat-lbl">Timeframes</div></div>
+    <div class="stat-item"><div class="stat-num">Bias</div><div class="stat-lbl">Based Approach</div></div>
+    <div class="stat-item"><div class="stat-num">XAU/USD</div><div class="stat-lbl">Metals Included</div></div>
+  </div>
+
+  <!-- FOUNDER -->
+  <div class="about-wrap" id="about-section">
+    <div class="section">
+      <div class="section-head">
+        <div class="section-head-left"><div class="section-line"></div><h2>Founder</h2></div>
+        <span>Van Duijn Markets</span>
+      </div>
+      <div class="about-grid">
+        <div class="about-photo">
+          <img src="https://i.postimg.cc/cHJSQvjn/Chat-GPT-Image-6-mei-2026-19-47-38.png" alt="Arie E.F. van Duijn">
+          <div class="about-photo-caption">
+            <div class="cap-role">Founder & Analyst</div>
+            <div class="cap-name">Arie E.F. van Duijn</div>
+          </div>
+        </div>
+        <div class="about-content">
+          <p>Arie E.F. van Duijn is the founder of Van Duijn Markets, an independent platform providing professional technical analysis and market bias on the forex market.</p>
+          <p>With over four years of experience in the financial markets, Van Duijn Markets operates with a structured and disciplined approach. Alongside managing personal capital, the firm is active with multiple proprietary trading firms, including <a href="https://ftmo.com" target="_blank">FTMO</a>, where discipline, risk management, and consistency are core principles.</p>
+          <p>The analysis provided by Van Duijn Markets is grounded in the concept that financial markets continuously seek balance, and that <strong>price inefficiencies are eventually filled over time</strong>. The firm's approach focuses on liquidity, market structure, and identifying high-probability zones within the forex market.</p>
+          <p>Van Duijn Markets aims to promote a more professional and business-focused view of trading — moving away from the noise and misleading culture that has become prevalent in the industry.</p>
+          <div class="about-stats">
+            <div class="about-stat"><div class="about-stat-num">4+</div><div class="about-stat-lbl">Years Experience</div></div>
+            <div class="about-stat"><div class="about-stat-num">4</div><div class="about-stat-lbl">Pairs Analysed</div></div>
+          </div>
+          <div class="disclaimer-box">
+            <p>The analyses shared on this platform reflect personal market bias and are strictly for informational purposes. Nothing constitutes financial advice or a recommendation to buy or sell any financial instrument.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TRACK RECORD -->
+  <div style="border-top:1px solid var(--border);border-bottom:1px solid var(--border)" id="trackrecord-section">
+    <div class="section">
+      <div class="section-head">
+        <div class="section-head-left"><div class="section-line"></div><h2>Track Record</h2></div>
+        <span>Verified payouts & allocations</span>
+      </div>
+      <div class="cards-grid" id="certificates-grid"></div>
+      <div style="margin-top:20px;border-left:2px solid var(--gold);padding:12px 18px;background:var(--bg2)">
+        <p style="font-size:0.75rem;color:var(--subtle);font-style:italic">Past performance and verified payouts do not guarantee future results.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- PRICING -->
+  <div class="pricing-wrap" id="pricing-section">
+    <div class="pricing-section">
+      <div class="pricing-head">
+        <div class="pricing-head-left"><div class="section-line" style="background:var(--gold2)"></div><h2>Subscription Plans</h2></div>
+        <span>Cancel anytime · No hidden fees</span>
+      </div>
+      <div class="pricing-grid">
+        <div class="plan">
+          <div class="plan-tier">Monthly Access</div>
+          <div class="plan-price"><sup>€</sup>49<sub> /mo</sub></div>
+          <hr class="plan-divider">
+          <ul class="plan-features">
+            <li>Daily analysis every trading day</li>
+            <li>DXY, EUR/USD, GBP/USD & XAU/USD</li>
+            <li>Bias & key price levels</li>
+            <li>HTF & LTF timeframe coverage</li>
+          </ul>
+          <button class="btn btn-outline-light btn-full">Subscribe Monthly</button>
+        </div>
+        <div class="plan featured">
+          <div class="plan-tier">Quarterly Access <span class="plan-badge">Save 15%</span></div>
+          <div class="plan-price"><sup>€</sup>125<sub> /3mo</sub></div>
+          <hr class="plan-divider">
+          <ul class="plan-features">
+            <li>Everything in Monthly</li>
+            <li>Weekly evaluation every weekend</li>
+            <li>Priority support access</li>
+            <li>Early access to updates</li>
+          </ul>
+          <button class="btn btn-dark btn-full" style="background:var(--gold);color:#1c1e1a">Subscribe Quarterly</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- MEMBER GATE -->
+<div id="page-gate" class="page">
+  <div class="gate">
+    <div class="gate-box">
+      <div class="gate-eyebrow">Van Duijn Markets</div>
+      <h2>Member Access</h2>
+      <p>This area is restricted to active subscribers. Enter your credentials to access the full analysis feed.</p>
+      <div class="form-group">
+        <label class="form-label">Access Password</label>
+        <input class="form-input" type="password" id="member-pw" placeholder="••••••••" onkeydown="if(event.key==='Enter')memberLogin()">
+      </div>
+      <button class="btn btn-dark btn-full" style="background:var(--accent);color:#f5f4f0" onclick="memberLogin()">Access Portal</button>
+      <div class="gate-err" id="member-err"></div>
+      <div class="gate-foot">Not yet a subscriber? <a href="#" onclick="goTo('pricing-section')">View plans →</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- MEMBER AREA -->
+<div id="page-member" class="page">
+  <div class="member-welcome">
+    <div>
+      <div class="member-welcome-sub">Van Duijn Markets — Member Portal</div>
+      <div class="member-welcome-title">Welcome back, trader.</div>
+    </div>
+    <div style="text-align:right">
+      <div style="font-size:0.65rem;letter-spacing:1px;color:#5a5c55;margin-bottom:10px" id="member-date"></div>
+      <button class="btn btn-ghost" onclick="showPage('landing')" style="font-size:0.62rem;padding:6px 16px">Sign Out</button>
+    </div>
+  </div>
+  <div class="filter-strip" id="pair-filters"></div>
+  <div style="max-width:1200px;margin:48px auto 0;padding:0 64px">
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:28px;padding-bottom:16px;border-bottom:1px solid var(--border)">
+      <div class="section-line"></div>
+      <div style="font-size:0.62rem;letter-spacing:3px;text-transform:uppercase;color:var(--gold)">Latest Analysis</div>
+    </div>
+    <div class="cards-grid" id="member-cards"></div>
+  </div>
+  <div style="max-width:1200px;margin:64px auto;padding:0 64px">
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:28px;padding-bottom:16px;border-bottom:1px solid var(--border)">
+      <div class="section-line"></div>
+      <div style="font-size:0.62rem;letter-spacing:3px;text-transform:uppercase;color:var(--gold)">Archive — By Pair</div>
+    </div>
+    <div id="archive-grid"></div>
+  </div>
+</div>
+
+<!-- ADMIN LOGIN -->
+<div id="page-admin-login" class="page">
+  <div class="gate">
+    <div class="gate-box">
+      <div class="gate-eyebrow">Administration</div>
+      <h2>Admin Access</h2>
+      <p>Restricted to authorised personnel only.</p>
+      <div class="form-group">
+        <label class="form-label">Admin Password</label>
+        <input class="form-input" type="password" id="admin-pw" placeholder="••••••••" onkeydown="if(event.key==='Enter')adminLogin()">
+      </div>
+      <button class="btn btn-dark btn-full" style="background:var(--accent);color:#f5f4f0" onclick="adminLogin()">Login</button>
+      <div class="gate-err" id="admin-err"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN PANEL -->
+<div id="page-admin" class="page">
+  <div class="admin-wrap">
+    <div class="admin-title-block">
+      <h2>Publish Analysis</h2>
+      <button class="btn btn-ghost" onclick="showPage('landing')" style="font-size:0.62rem;padding:6px 16px">← Exit</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Currency Pair</label>
+      <select id="f-pair" class="form-input"><option>DXY</option><option>EUR/USD</option><option>GBP/USD</option><option>XAU/USD</option></select>
+    </div>
+    <div class="form-row" style="margin-bottom:16px">
+      <div class="form-group" style="margin:0"><label class="form-label">Timeframe</label><select id="f-tf" class="form-input"><option>H1</option><option>H4</option><option>D1</option><option>W1</option><option>MN</option><option>M15</option></select></div>
+      <div class="form-group" style="margin:0"><label class="form-label">Bias</label><select id="f-bias" class="form-input"><option>Bullish</option><option>Bearish</option><option>Neutral</option></select></div>
+    </div>
+    <div class="form-row" style="margin-bottom:16px">
+      <div class="form-group" style="margin:0"><label class="form-label">Key Level</label><input id="f-entry" class="form-input" placeholder="1.0850" type="number" step="0.0001"></div>
+      <div class="form-group" style="margin:0"><label class="form-label">HTF Target</label><input id="f-sl" class="form-input" placeholder="1.0800" type="number" step="0.0001"></div>
+      <div class="form-group" style="margin:0"><label class="form-label">LTF Target</label><input id="f-tp" class="form-input" placeholder="1.0950" type="number" step="0.0001"></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Analysis</label>
+      <textarea id="f-notes" class="form-input" placeholder="Describe the bias, key liquidity zones, price inefficiencies and market structure..."></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">HTF Chart URL (postimg.cc)</label>
+      <input type="text" id="f-htf-img" class="form-input" placeholder="https://i.postimg.cc/...">
+    </div>
+    <div class="form-group">
+      <label class="form-label">LTF Chart URL (postimg.cc)</label>
+      <input type="text" id="f-ltf-img" class="form-input" placeholder="https://i.postimg.cc/...">
+    </div>
+    <button class="btn btn-dark btn-full" style="background:var(--accent);color:#f5f4f0" onclick="postAnalysis()">Publish Analysis</button>
+    <div style="margin-top:52px">
+      <div class="admin-list-title">Published Posts</div>
+      <div id="admin-list-items"></div>
+    </div>
+
+    <!-- CERTIFICATES -->
+    <div style="margin-top:56px;padding-top:32px;border-top:1px solid var(--border)">
+      <div class="admin-list-title" style="margin-bottom:24px">Add Certificate</div>
+      <div class="form-group">
+        <label class="form-label">Firm</label>
+        <select id="c-firm" class="form-input"><option>FTMO</option><option>The Funded Trader</option><option>MyForexFunds</option><option>E8 Funding</option><option>Other</option></select>
+      </div>
+      <div class="form-row" style="margin-bottom:16px">
+        <div class="form-group" style="margin:0"><label class="form-label">Type</label><select id="c-type" class="form-input"><option>Payout Certificate</option><option>Max Allocation</option><option>Consistency Certificate</option></select></div>
+        <div class="form-group" style="margin:0"><label class="form-label">Amount</label><input id="c-amount" class="form-input" placeholder="€2,400"></div>
+        <div class="form-group" style="margin:0"><label class="form-label">Date</label><input id="c-date" class="form-input" placeholder="March 2026"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Certificate Image URL (postimg.cc)</label>
+        <input type="text" id="c-img" class="form-input" placeholder="https://i.postimg.cc/...">
+      </div>
+      <button class="btn btn-dark btn-full" style="background:var(--accent);color:#f5f4f0" onclick="addCertificate()">Add Certificate</button>
+      <div style="margin-top:28px">
+        <div class="admin-list-title" style="margin-bottom:2px">Published Certificates</div>
+        <div id="cert-admin-list"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const MEMBER_PW = 'member123';
+  const ADMIN_PW = 'admin123';
+  let posts = [], certificates = [], nextId = 1, activeFilter = 'all';
+
+  const DEFAULT_POSTS = [
+    { id:1, pair:'EUR/USD', tf:'H4', bias:'Bullish', entry:'1.0850', sl:'1.0800', tp:'1.0950', htfImg:'', ltfImg:'', notes:'Price trading above a key liquidity zone at 1.0850. Expecting bullish continuation as inefficiencies above remain unfilled. Bias is long, targeting the 1.0950 area where sell-side liquidity rests.', date:'13 May 2026' },
+    { id:2, pair:'GBP/USD', tf:'D1', bias:'Bearish', entry:'1.2650', sl:'1.2720', tp:'1.2500', htfImg:'', ltfImg:'', notes:'Cable showing clear rejection from a premium supply zone at 1.2650. Daily structure bearish. Price imbalance below at 1.2500 remains unfilled.', date:'13 May 2026' },
+    { id:3, pair:'XAU/USD', tf:'H4', bias:'Bullish', entry:'2318.00', sl:'2295.00', tp:'2360.00', htfImg:'', ltfImg:'', notes:'Gold tapping into a strong demand zone at 2318. Clear price inefficiency visible on H4. Bullish bias targeting 2360 liquidity.', date:'12 May 2026' },
+  ];
+
+  function bc(b){ return b==='Bullish'?'bull':b==='Bearish'?'bear':'neut'; }
+
+  function cardHTML(p, blur=false){
+    const charts = (p.htfImg||p.ltfImg) ? `
+      <div class="card-charts">
+        <div class="chart-box"><div class="chart-label">HTF Chart</div>${p.htfImg?`<img src="${p.htfImg}" alt="HTF">`:`<div class="chart-empty">No image</div>`}</div>
+        <div class="chart-box"><div class="chart-label">LTF Chart</div>${p.ltfImg?`<img src="${p.ltfImg}" alt="LTF">`:`<div class="chart-empty">No image</div>`}</div>
+      </div>` : '';
+    return `<div class="card">
+      <div class="card-top">
+        <div><div class="card-pair">${p.pair}</div><div class="card-meta">${p.tf} · ${p.date}</div></div>
+        <div class="bias-tag ${bc(p.bias)}">${p.bias}</div>
+      </div>
+      <div class="levels-row">
+        <div class="level"><div class="level-lbl">Key Level</div><div class="level-val entry">${p.entry}</div></div>
+        <div class="level"><div class="level-lbl">HTF Target</div><div class="level-val sl">${p.sl}</div></div>
+        <div class="level"><div class="level-lbl">LTF Target</div><div class="level-val tp">${p.tp}</div></div>
+      </div>
+      ${charts}
+      <div class="card-notes">${p.notes}</div>
+      <div class="card-footer"><span class="card-date">${p.date}</span></div>
+      ${blur?`<div class="blur-overlay"><p>Subscriber Access Required</p><button class="btn btn-dark" style="background:var(--accent);color:#f5f4f0;padding:10px 24px" onclick="showPage('gate')">Request Access</button></div>`:''}
+    </div>`;
+  }
+
+  function renderSnapshot(){
+    document.getElementById('hero-snapshot').innerHTML = posts.slice(0,5).map(p=>`
+      <div class="snapshot-row"><span class="snap-pair">${p.pair}</span><span class="snap-bias ${bc(p.bias)}">${p.bias}</span></div>`
+    ).join('') || '<div class="snapshot-row"><span style="color:#5a5c55;font-size:0.78rem">No analysis published yet</span></div>';
+  }
+
+  function renderMember(){
+    const filtered = activeFilter==='all' ? posts : posts.filter(p=>p.pair===activeFilter);
+    document.getElementById('member-cards').innerHTML = filtered.length
+      ? filtered.map(p=>cardHTML(p)).join('')
+      : '<div style="padding:56px;color:var(--subtle);font-size:0.78rem;text-align:center;background:var(--bg2);letter-spacing:1.5px;text-transform:uppercase">No analysis published yet</div>';
+    const pairs = [...new Set(posts.map(p=>p.pair))];
+    document.getElementById('pair-filters').innerHTML =
+      `<button class="filter-btn ${activeFilter==='all'?'active':''}" onclick="filterPair('all',this)">All Pairs</button>` +
+      pairs.map(p=>`<button class="filter-btn ${activeFilter===p?'active':''}" onclick="filterPair('${p}',this)">${p}</button>`).join('');
+    renderArchive();
+    const d = new Date();
+    const days=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    const mo=['January','February','March','April','May','June','July','August','September','October','November','December'];
+    document.getElementById('member-date').textContent = `${days[d.getDay()]}, ${d.getDate()} ${mo[d.getMonth()]} ${d.getFullYear()}`;
+  }
+
+  function renderArchive(){
+    const pairs = ['DXY','EUR/USD','GBP/USD','XAU/USD'];
+    document.getElementById('archive-grid').innerHTML = pairs.map(pair=>{
+      const pp = posts.filter(p=>p.pair===pair);
+      if(!pp.length) return '';
+      const safeId = pair.replace('/','');
+      return `<div style="margin-bottom:2px">
+        <div class="archive-pair-header" onclick="toggleArchive('arch-${safeId}','toggle-${safeId}')">
+          <div style="display:flex;align-items:center;gap:14px">
+            <div class="section-line"></div>
+            <span style="font-size:0.78rem;font-weight:700;letter-spacing:2px;color:var(--text)">${pair}</span>
+            <span style="font-size:0.65rem;color:var(--subtle)">${pp.length} ${pp.length===1?'analysis':'analyses'}</span>
+          </div>
+          <span id="toggle-${safeId}" style="font-size:0.7rem;color:var(--gold)">▼</span>
+        </div>
+        <div id="arch-${safeId}" style="display:none">
+          <div class="cards-grid">${pp.map(p=>cardHTML(p)).join('')}</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  function toggleArchive(archId, toggleId){
+    const el = document.getElementById(archId);
+    const tog = document.getElementById(toggleId);
+    const open = el.style.display !== 'none' && el.style.display !== '';
+    el.style.display = open ? 'none' : 'block';
+    if(tog) tog.textContent = open ? '▼' : '▲';
+  }
+
+  function renderCertificates(){
+    const grid = document.getElementById('certificates-grid');
+    if(!grid) return;
+    grid.innerHTML = certificates.length ? certificates.map((c,i)=>`
+      <div style="background:var(--bg);padding:28px;display:flex;flex-direction:column;gap:16px">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between">
+          <div>
+            <div style="font-size:0.6rem;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:6px">${c.firm}</div>
+            <div style="font-size:0.9rem;font-weight:600;color:var(--text)">${c.type}</div>
+            <div style="font-size:0.7rem;color:var(--subtle);margin-top:3px">${c.date}</div>
+          </div>
+          <div style="font-family:var(--font);font-size:1.4rem;color:var(--gold)">${c.amount}</div>
+        </div>
+        <div style="background:var(--bg2);border:1px solid var(--border);overflow:hidden">
+          ${c.img?`<img src="${c.img}" style="width:100%;height:auto;display:block;object-fit:contain">`:`<div style="padding:40px;text-align:center;font-size:0.62rem;letter-spacing:2px;text-transform:uppercase;color:var(--subtle)">No image</div>`}
+        </div>
+      </div>`).join('')
+    : '<div style="background:var(--bg);padding:48px;text-align:center;color:var(--subtle);font-size:0.78rem;letter-spacing:1.5px;text-transform:uppercase">No certificates added yet</div>';
+  }
+
+  function renderCertAdminList(){
+    document.getElementById('cert-admin-list').innerHTML = certificates.map((c,i)=>`
+      <div class="admin-item">
+        <div class="admin-item-info"><strong>${c.firm} — ${c.type}</strong><span>${c.amount} · ${c.date}</span></div>
+        <button class="btn-del" onclick="deleteCertificate(${i})">Remove</button>
+      </div>`).join('') || '<p style="color:var(--subtle);font-size:0.8rem;padding:16px 0">No certificates added.</p>';
+  }
+
+  function renderAdminList(){
+    document.getElementById('admin-list-items').innerHTML = posts.map(p=>`
+      <div class="admin-item">
+        <div class="admin-item-info"><strong>${p.pair} · ${p.tf}</strong><span><span class="bias-tag ${bc(p.bias)}" style="font-size:0.56rem;padding:2px 8px">${p.bias}</span> &nbsp;${p.date}</span></div>
+        <button class="btn-del" onclick="deletePost(${p.id})">Remove</button>
+      </div>`).join('') || '<p style="color:var(--subtle);font-size:0.8rem;padding:16px 0">No posts published.</p>';
+  }
+
+  function filterPair(pair,el){ activeFilter=pair; document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active')); el.classList.add('active'); renderMember(); }
+
+  function showPage(id){
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    document.getElementById('page-'+id).classList.add('active');
+    if(id==='member') renderMember();
+    if(id==='admin'){ renderAdminList(); renderCertAdminList(); }
+    if(id==='landing') renderSnapshot();
+    window.scrollTo(0,0);
+  }
+
+  function goTo(id){
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    document.getElementById('page-landing').classList.add('active');
+    renderSnapshot();
+    setTimeout(()=>{ const el=document.getElementById(id); if(el) el.scrollIntoView({behavior:'smooth'}); },150);
+  }
+
+  function memberLogin(){
+    if(document.getElementById('member-pw').value===MEMBER_PW){ document.getElementById('member-err').textContent=''; showPage('member'); }
+    else { document.getElementById('member-err').textContent='Incorrect credentials. Please try again.'; }
+  }
+
+  function adminLogin(){
+    if(document.getElementById('admin-pw').value===ADMIN_PW){ document.getElementById('admin-err').textContent=''; showPage('admin'); }
+    else { document.getElementById('admin-err').textContent='Incorrect credentials.'; }
+  }
+
+  async function postAnalysis(){
+    const entry=document.getElementById('f-entry').value, sl=document.getElementById('f-sl').value, tp=document.getElementById('f-tp').value, notes=document.getElementById('f-notes').value.trim();
+    const htfImg=document.getElementById('f-htf-img').value.trim(), ltfImg=document.getElementById('f-ltf-img').value.trim();
+    if(!entry||!sl||!tp||!notes){alert('Please complete all fields.');return;}
+    const d=new Date(), mo=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    posts.unshift({id:nextId++,pair:document.getElementById('f-pair').value,tf:document.getElementById('f-tf').value,bias:document.getElementById('f-bias').value,entry,sl,tp,notes,htfImg,ltfImg,date:`${d.getDate()} ${mo[d.getMonth()]} ${d.getFullYear()}`});
+    ['f-entry','f-sl','f-tp','f-notes','f-htf-img','f-ltf-img'].forEach(id=>document.getElementById(id).value='');
+    await savePosts(); renderAdminList(); renderSnapshot();
+    alert('Analysis published successfully.');
+  }
+
+  async function deletePost(id){
+    if(!confirm('Remove this analysis?'))return;
+    posts=posts.filter(p=>p.id!==id);
+    await savePosts(); renderAdminList(); renderSnapshot();
+  }
+
+  async function addCertificate(){
+    const firm=document.getElementById('c-firm').value, type=document.getElementById('c-type').value;
+    const amount=document.getElementById('c-amount').value.trim(), date=document.getElementById('c-date').value.trim();
+    const img=document.getElementById('c-img').value.trim();
+    if(!amount||!date){alert('Please fill in amount and date.');return;}
+    certificates.push({firm,type,amount,date,img});
+    await saveCerts(); renderCertificates(); renderCertAdminList();
+    ['c-amount','c-date','c-img'].forEach(id=>document.getElementById(id).value='');
+    alert('Certificate added successfully.');
+  }
+
+  async function deleteCertificate(i){
+    if(!confirm('Remove this certificate?'))return;
+    certificates.splice(i,1);
+    await saveCerts(); renderCertificates(); renderCertAdminList();
+  }
+
+  async function savePosts(){
+    try{ await window.storage.set('vdm-posts',JSON.stringify(posts)); await window.storage.set('vdm-nextid',String(nextId)); }catch(e){}
+  }
+  async function saveCerts(){
+    try{ await window.storage.set('vdm-certs',JSON.stringify(certificates)); }catch(e){}
+  }
+  async function loadData(){
+    try{
+      const p=await window.storage.get('vdm-posts');
+      const c=await window.storage.get('vdm-certs');
+      const n=await window.storage.get('vdm-nextid');
+      posts=(p&&p.value)?JSON.parse(p.value):DEFAULT_POSTS;
+      certificates=(c&&c.value)?JSON.parse(c.value):[];
+      nextId=(n&&n.value)?parseInt(n.value):posts.length?Math.max(...posts.map(x=>x.id))+1:4;
+    }catch(e){ posts=DEFAULT_POSTS; certificates=[]; }
+    renderSnapshot(); renderCertificates(); renderCertAdminList(); renderAdminList();
+  }
+
+  // TICKER
+  const tickerPairs=[{p:'EUR/USD',fallback:1.0842},{p:'GBP/USD',fallback:1.2651},{p:'XAU/USD',fallback:2318.50}];
+  let tickData=tickerPairs.map(x=>({p:x.p,price:x.fallback,base:x.fallback,change:0}));
+
+  function fmtPrice(pair,price){ return pair==='XAU/USD'?price.toFixed(2):price.toFixed(4); }
+
+  function buildTicker(){
+    document.getElementById('ticker').innerHTML=[...tickData,...tickData].map(d=>{
+      const dir=d.change>=0?'up':'down', arrow=d.change>=0?'▲':'▼';
+      const chg=(d.change>=0?'+':'')+Math.abs(d.change).toFixed(d.p==='XAU/USD'?2:4);
+      return `<span class="tick-item"><span class="tick-pair">${d.p}</span><span class="tick-price">${fmtPrice(d.p,d.price)}</span><span class="tick-${dir}">${arrow} ${chg}</span></span>`;
+    }).join('');
+  }
+
+  async function fetchRates(){
+    try{
+      const [r1,r2]=await Promise.all([fetch('https://api.frankfurter.app/latest?from=EUR&to=USD'),fetch('https://api.frankfurter.app/latest?from=GBP&to=USD')]);
+      const [d1,d2]=await Promise.all([r1.json(),r2.json()]);
+      const rates={'EUR/USD':d1.rates.USD,'GBP/USD':d2.rates.USD};
+      tickData=tickData.map(d=>{ const r=rates[d.p]; return r?{...d,price:r,change:r-d.base,base:r}:d; });
+      buildTicker();
+    }catch(e){}
+  }
+
+  // Draggable ticker
+  const tickEl=document.getElementById('ticker');
+  const tickBar=tickEl.parentElement;
+  let isDrag=false,dragStartX=0,dragOffsetX=0,posX=0,lastT=0,raf=null;
+  const SPEED=50;
+
+  function animTick(ts){
+    if(!lastT) lastT=ts;
+    const dt=(ts-lastT)/1000; lastT=ts;
+    posX-=SPEED*dt;
+    const w=tickEl.scrollWidth/2;
+    if(posX<-w) posX+=w;
+    tickEl.style.transform=`translateX(${posX}px)`;
+    raf=requestAnimationFrame(animTick);
+  }
+
+  tickBar.addEventListener('mousedown',e=>{
+    isDrag=true; cancelAnimationFrame(raf); lastT=0;
+    try{ const m=new WebKitCSSMatrix(window.getComputedStyle(tickEl).transform); posX=m.m41; }catch(e){}
+    dragStartX=e.pageX; dragOffsetX=posX; tickBar.style.cursor='grabbing';
+  });
+  document.addEventListener('mousemove',e=>{
+    if(!isDrag) return;
+    posX=dragOffsetX+(e.pageX-dragStartX);
+    const w=tickEl.scrollWidth/2;
+    if(posX<-w) posX+=w; if(posX>0) posX-=w;
+    tickEl.style.transform=`translateX(${posX}px)`;
+  });
+  document.addEventListener('mouseup',()=>{
+    if(!isDrag) return;
+    isDrag=false; tickBar.style.cursor='grab'; lastT=0; raf=requestAnimationFrame(animTick);
+  });
+
+  // Init
+  setTimeout(()=>{ buildTicker(); raf=requestAnimationFrame(animTick); fetchRates(); setInterval(fetchRates,60000); },200);
+  loadData();
+</script>
+</body>
+</html>
